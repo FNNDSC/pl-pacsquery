@@ -9,8 +9,8 @@ COPY ["requirements.txt", "${APPROOT}"]
 
 WORKDIR $APPROOT
 
-RUN apt-get update \
-  && apt-get install dcmtk imagemagick\
+RUN apt-get update -y\
+  && apt-get install -y dcmtk\
   && pip install -r requirements.txt
 
 CMD ["pacsquery.py", "--json"]
