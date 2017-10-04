@@ -1,2 +1,2 @@
 chrisapp==1.0.0
-pypx==0.9
+pypx==0.10
