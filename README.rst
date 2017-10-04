@@ -24,7 +24,7 @@ Using ``docker run``
 
 .. code-block:: bash
 
-  docker run -t--rm
+  docker run -t--rm \
     -v $(pwd)/input:/input \
     -v $(pwd)/output:/output             \
     fnndsc/pl-pacsquery pacsquery.py
