@@ -51,8 +51,15 @@ class PacsQueryApp(ChrisApp):
     LICENSE = 'Opensource (MIT)'
     VERSION = '0.1'
 
+    # Fill out this with key-value output descriptive info (such as an output file path
+    # relative to the output dir) that you want to save to the output meta file when
+    # called with the --saveoutputmeta flag
+    OUTPUT_META_DICT = {}
+
     def define_parameters(self):
-        """ Define parameters """
+        """
+        Define the CLI arguments accepted by this plugin app.
+        """
         # PACS settings
         self.add_argument(
             '--aet',
@@ -142,8 +149,9 @@ class PacsQueryApp(ChrisApp):
             help='Series Description')
 
     def run(self, options):
-        """ Run plugin """
-
+        """
+        Define the code to be run by this plugin app.
+        """
         # common options between all request types
         # aet
         # aec
