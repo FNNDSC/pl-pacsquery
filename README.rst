@@ -26,7 +26,7 @@ Using ``docker run``
 
   docker run -t --rm \
     -v $(pwd)/output:/output \
-    fnndsc/pl-pacsquery pacsquery.py
+    fnndsc/pl-pacsquery pacsquery.py \
     --aet CHIPS --aec ORTHANC \
     --serverIP 192.168.1.40 --serverPort 4242 \
     /output
