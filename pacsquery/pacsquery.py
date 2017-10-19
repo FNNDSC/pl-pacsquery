@@ -45,13 +45,14 @@ class PacsQueryApp(ChrisApp):
     OUTPUT_META_DICT = {}
 
     def __init__(self, *args, **kwargs):
+        ChrisApp.__init__(self, *args, **kwargs)
 
         self.__name__       = 'PacsQueryApp'
 
         # Debugging control
         self.b_useDebug     = False
         self.str_debugFile  = '/dev/null'
-        self.b_quiet        = False
+        self.b_quiet        = True
         self.dp             = pfmisc.debug(    
                                             verbosity   = 0,
                                             level       = -1,
@@ -66,19 +67,7 @@ class PacsQueryApp(ChrisApp):
 
         # Control
         self.b_canRun       = False
-
-        pudb.set_trace()
-
-        ChrisApp.__init__(self, *args, **kwargs)
        
-
-        if len(self.str_msg) and len(self.str_pfdcm):
-            try:
-                self.d_msg      = json.loads(self.str_msg)
-                self.b_canRun   = True
-            except:
-                self.b_canRun   = False
-
     def define_parameters(self):
         """
         Define the CLI arguments accepted by this plugin app.
@@ -88,23 +77,37 @@ class PacsQueryApp(ChrisApp):
         #   1. The IP:port of the pfdcm service
         #   2. A 'msg' type string / dictionary to send to the service.
 
-        pudb.set_trace()
-
         # PACS settings
         self.add_argument(
             '--pfdcm',
-            dest        = 'self.str_pfdcm',
+            dest        = 'str_pfdcm',
             type        = str,
             default     = '',
             optional    = True,
-            help        = 'The PACS Q/R intermediary service.')
+            help        = 'The PACS Q/R intermediary service IP:port.')
         self.add_argument(
             '--msg',
-            dest        = 'self.str_msg',
+            dest        = 'str_msg',
             type        = str,
             default     = '',
             optional    = True,
             help        = 'The actual message to send to the Q/R intermediary service.')
+        self.add_argument(
+            '--man',
+            dest        = 'b_man',
+            type        = bool,
+            default     = False,
+            action      = 'store_true',
+            optional    = True,
+            help        = 'Return a JSON formatted man/help paragraph.')
+        self.add_argument(
+            '--pfurlQuiet',
+            dest        = 'b_pfurlQuiet',
+            type        = bool,
+            default     = False,
+            action      = 'store_true',
+            optional    = True,
+            help        = 'Silence pfurl noise.')
 
     def df_print(self, adict):
         """
@@ -123,44 +126,67 @@ class PacsQueryApp(ChrisApp):
             http                    = self.str_pfdcm,
             verb                    = 'POST',
             b_raw                   = True,
-            b_quiet                 = self.b_quiet,
+            b_quiet                 = self.b_pfurlQuiet,
             b_httpResponseBodyParse = True,
             jsonwrapper             = 'payload',
             debugFile               = self.str_debugFile,
             useDebug                = self.b_useDebug
         )
         
-        self.dp.qprint('Sending d_msg = %s' % self.df_print(d_msg))
+        self.dp.qprint('Sending d_msg =\n %s' % self.df_print(d_msg))
         d_response      = json.loads(serviceCall())
         return d_response
+
+    def man_show(self):
+        """
+        return a simple man/usage paragraph.
+        """
+
+        d_ret = {
+            "help": """
+                python3 pacsquery.py --pfdcm ${HOST_IP}:5015 --msg \
+                '{  
+                    "action": "PACSinteract",
+                    "meta": 
+                        {
+                            "do":  "query",
+                            "on" : 
+                            {
+                                "PatientID": "LILLA-9731"
+                            },
+                            "PACS" : "orthanc"
+                        }
+                }' /tmp
+            """
+        }
+
+        return d_ret
 
     def run(self, options):
         """
         Define the code to be run by this plugin app.
         """
 
-        if self.b_canRun:
-            # d_msg = {
-            #     'action':   'PACSinteract',
-            #     'meta': {
-            #         'do':   'query',
-            #         'on':   {
-            #             'PatientID':    '4780041'
-            #         },
-            #         'PACS': 'orthanc'
-            #     }
-            # }
+        d_ret                   = {}
+        self.b_pfurlQuiet       = options.b_pfurlQuiet
 
+        if options.b_man:
+            d_ret = self.man_show()
+
+        if len(options.str_msg) and len(options.str_pfdcm) and not options.b_man:
+            self.str_msg        = options.str_msg
+            self.str_pfdcm      = options.str_pfdcm
+            try:
+                self.d_msg      = json.loads(self.str_msg)
+                self.b_canRun   = True
+            except:
+                self.b_canRun   = False
+
+        if self.b_canRun:
             d_ret = self.service_call(msg = self.d_msg)
 
-            print(d_ret)
-            self.dp.qprint('Hello, world!')
-            self.test()
-
-    def test(self, *args, **kwargs):
-        """
-        """
-        self.dp.qprint('error', comms=  'error')
+        print(self.df_print(d_ret))
+        return d_ret
 
 # ENTRYPOINT
 if __name__ == "__main__":
