@@ -12,27 +12,15 @@
 
 import os
 import json
+import pprint
+
 import pypx
+import pfurl
+import pfmisc
+import pudb
 
 # import the Chris app superclass
 from chrisapp.base import ChrisApp
-
-# dicom settings
-#
-DICOM = {}
-DICOM['server_ip'] = '173.48.120.248'
-DICOM['server_port'] = '4242'
-DICOM['called_aet'] = 'ORTHANC'
-DICOM['calling_aet'] = 'CHIPS'
-
-if 'DICOM_SERVER_IP' in os.environ:
-    DICOM['server_ip'] = os.environ['DICOM_SERVER_IP']
-if 'DICOM_SERVER_PORT' in os.environ:
-    DICOM['server_port'] = os.environ['DICOM_SERVER_PORT']
-if 'CALLING_AET' in os.environ:
-    DICOM['calling_aet'] = os.environ['DICOM_CALLING_AET']
-if 'CALLED_AET' in os.environ:
-    DICOM['called_aet'] = os.environ['CALLED_AET']
 
 class PacsQueryApp(ChrisApp):
     '''
@@ -49,155 +37,130 @@ class PacsQueryApp(ChrisApp):
     DESCRIPTION = 'An app to find data of interest on the PACS'
     DOCUMENTATION = 'http://wiki'
     LICENSE = 'Opensource (MIT)'
-    VERSION = '0.1'
+    VERSION = '0.99'
 
     # Fill out this with key-value output descriptive info (such as an output file path
     # relative to the output dir) that you want to save to the output meta file when
     # called with the --saveoutputmeta flag
     OUTPUT_META_DICT = {}
 
+    def __init__(self, *args, **kwargs):
+
+        self.__name__       = 'PacsQueryApp'
+
+        # Debugging control
+        self.b_useDebug     = False
+        self.str_debugFile  = '/dev/null'
+        self.b_quiet        = False
+        self.dp             = pfmisc.debug(    
+                                            verbosity   = 0,
+                                            level       = -1,
+                                            within      = self.__name__
+                                            )
+        self.pp             = pprint.PrettyPrinter(indent=4)
+
+        # Service and payload vars
+        self.str_pfdcm      = ''
+        self.str_msg        = ''
+        self.d_msg          = {}
+
+        # Control
+        self.b_canRun       = False
+
+        pudb.set_trace()
+
+        ChrisApp.__init__(self, *args, **kwargs)
+       
+
+        if len(self.str_msg) and len(self.str_pfdcm):
+            try:
+                self.d_msg      = json.loads(self.str_msg)
+                self.b_canRun   = True
+            except:
+                self.b_canRun   = False
+
     def define_parameters(self):
         """
         Define the CLI arguments accepted by this plugin app.
         """
+
+        # The space of input parameters is very straightforward
+        #   1. The IP:port of the pfdcm service
+        #   2. A 'msg' type string / dictionary to send to the service.
+
+        pudb.set_trace()
+
         # PACS settings
         self.add_argument(
-            '--aet',
-            dest='aet',
-            type=str,
-            default=DICOM['calling_aet'],
-            optional=True,
-            help='aet')
+            '--pfdcm',
+            dest        = 'self.str_pfdcm',
+            type        = str,
+            default     = '',
+            optional    = True,
+            help        = 'The PACS Q/R intermediary service.')
         self.add_argument(
-            '--aec',
-            dest='aec',
-            type=str,
-            default=DICOM['called_aet'],
-            optional=True,
-            help='aec')
-        self.add_argument(
-            '--serverIP',
-            dest='server_ip',
-            type=str,
-            default=DICOM['server_ip'],
-            optional=True,
-            help='PACS server IP')
-        self.add_argument(
-            '--serverPort',
-            dest='server_port',
-            type=str,
-            default=DICOM['server_port'],
-            optional=True,
-            help='PACS server port')
+            '--msg',
+            dest        = 'self.str_msg',
+            type        = str,
+            default     = '',
+            optional    = True,
+            help        = 'The actual message to send to the Q/R intermediary service.')
 
-        # Query settings
-        self.add_argument(
-            '--patientID',
-            dest='patient_id',
-            type=str,
-            default='',
-            optional=True,
-            help='Patient ID')
-        self.add_argument(
-            '--patientName',
-            dest='patient_name',
-            type=str,
-            default='',
-            optional=True,
-            help='Patient name')
-        self.add_argument(
-            '--patientSex',
-            dest='patient_sex',
-            type=str,
-            default='',
-            optional=True,
-            help='Patient sex')
-        self.add_argument(
-            '--studyDate',
-            dest='study_date',
-            type=str,
-            default='',
-            optional=True,
-            help='Study date (YYYY/MM/DD)')
-        self.add_argument(
-            '--modalitiesInStudy',
-            dest='modalities_in_study',
-            type=str,
-            default='',
-            optional=True,
-            help='Modalities in study')
-        self.add_argument(
-            '--performedStationAETitle',
-            dest='performed_station_aet',
-            type=str,
-            default='',
-            optional=True,
-            help='Performed station aet')
-        self.add_argument(
-            '--studyDescription',
-            dest='study_description',
-            type=str,
-            default='',
-            optional=True,
-            help='Study description')
-        self.add_argument(
-            '--seriesDescription',
-            dest='series_description',
-            type=str,
-            default='',
-            optional=True,
-            help='Series Description')
+    def df_print(self, adict):
+        """
+        Return a nicely formatted string representation of a dictionary
+        """
+        return self.pp.pformat(adict).strip()
+
+    def service_call(self, *args, **kwargs):
+
+        d_msg   = {}
+        for k, v in kwargs.items():
+            if k == 'msg':  d_msg   = v
+
+        serviceCall = pfurl.Pfurl(
+            msg                     = json.dumps(d_msg),
+            http                    = self.str_pfdcm,
+            verb                    = 'POST',
+            b_raw                   = True,
+            b_quiet                 = self.b_quiet,
+            b_httpResponseBodyParse = True,
+            jsonwrapper             = 'payload',
+            debugFile               = self.str_debugFile,
+            useDebug                = self.b_useDebug
+        )
+        
+        self.dp.qprint('Sending d_msg = %s' % self.df_print(d_msg))
+        d_response      = json.loads(serviceCall())
+        return d_response
 
     def run(self, options):
         """
         Define the code to be run by this plugin app.
         """
-        # common options between all request types
-        # aet
-        # aec
-        # ip
-        # port
-        pacs_settings = {
-            'aet': options.aet,
-            'aec': options.aec,
-            'server_ip': options.server_ip,
-            'server_port': options.server_port
-        }
 
-        # echo the PACS to make sure we can access it
-        pacs_settings['executable'] = '/usr/bin/echoscu'
+        if self.b_canRun:
+            # d_msg = {
+            #     'action':   'PACSinteract',
+            #     'meta': {
+            #         'do':   'query',
+            #         'on':   {
+            #             'PatientID':    '4780041'
+            #         },
+            #         'PACS': 'orthanc'
+            #     }
+            # }
 
-        echo = pypx.echo(pacs_settings)
-        if echo['status'] == 'error':
-            with open(os.path.join(options.outputdir, echo['status'] + '.txt'), 'w') as outfile:
-                json.dump(echo, outfile, indent=4, sort_keys=True, separators=(',', ':'))
-            return
+            d_ret = self.service_call(msg = self.d_msg)
 
-        # find in the PACS
-        # find ALL by default (studies + series + images)
-        # type: all, study, series, image
-        pacs_settings['executable'] = '/usr/bin/findscu'
+            print(d_ret)
+            self.dp.qprint('Hello, world!')
+            self.test()
 
-        first_patient_id = options.patient_id.split(',')[0]
-
-        # query parameters
-        query_settings = {
-            'PatientID': first_patient_id,
-            'PatientName': options.patient_name,
-            'PatientSex': options.patient_sex,
-            'StudyDate': options.study_date,
-            'ModalitiesInStudy': options.modalities_in_study,
-            'PerformedStationAETitle': options.performed_station_aet,
-            'StudyDescription': options.study_description,
-            'SeriesDescription': options.series_description
-        }
-
-        # python 3.5 is required!
-        find = pypx.find({**pacs_settings, **query_settings})
-        with open(os.path.join(options.outputdir, find['status'] + '.txt'), 'w') as outfile:
-            json.dump(find, outfile, indent=4, sort_keys=True, separators=(',', ':'))
-
-        return json.dumps(find)
+    def test(self, *args, **kwargs):
+        """
+        """
+        self.dp.qprint('error', comms=  'error')
 
 # ENTRYPOINT
 if __name__ == "__main__":
