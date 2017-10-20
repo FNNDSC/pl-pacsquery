@@ -40,7 +40,7 @@ RUN apt-get update \
   && echo "localuser:localuser" | chpasswd                            \
   && adduser localuser sudo                                           \
   && apt-get install libcurl4-openssl-dev                             \
-  && pip install -r /usr/src/pacsquery/requirements.txt
+  && pip install -r requirements.txt
 
 WORKDIR $APPROOT
 
