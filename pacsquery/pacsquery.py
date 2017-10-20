@@ -411,6 +411,91 @@ class PacsQueryApp(ChrisApp):
             f.write(str_report)
             f.close()
 
+    def manPage_checkAndShow(self, options):
+        """
+        Check if the user wants inline help. If so, present requested help
+
+        Return a bool based on check.
+        """
+
+        ret = False
+        if len(options.str_man):
+            ret = True
+            d_man = self.man_get()
+            if options.str_man in d_man:
+                str_help    = d_man[options.str_man]
+                print(str_help)
+            if options.str_man == 'entries':
+                print(d_man.keys())
+
+        return ret
+
+    def directMessage_checkAndConstruct(self, options):
+        """
+        Checks if user specified a direct message to the 'pfdcm' service, 
+        and if so, construct the message.
+
+        Return True/False accordingly
+        """
+
+        ret = False
+        if len(options.str_msg):
+            ret = True
+            self.str_msg        = options.str_msg
+            try:
+                self.d_msg      = json.loads(self.str_msg)
+                self.b_canRun   = True
+            except:
+                self.b_canRun   = False
+        return ret
+
+    def queryMessage_checkAndConstruct(self, options):
+        """
+        Checks if user specified a query from a pattern of command line flags,
+        and if so, construct the message.
+
+        Return True/False accordingly
+        """
+
+        if len(options.str_patientID) and len(options.str_PACSservice):
+            self.str_patientID      = options.str_patientID
+            self.str_PACSservice    = options.str_PACSservice
+            self.d_msg  = {
+                'action':   'PACSinteract',
+                'meta': {
+                    'do':   'query',
+                    'on': {
+                        'PatientID': self.str_patientID
+                    },
+                    "PACS": self.str_PACSservice
+                }
+            }
+            self.b_canRun   = True
+
+    def outputFiles_generate(self, options, hits, d_ret, l_data):
+        """
+        Check and generate output files.
+        """
+        if len(options.str_numberOfHitsFile):
+            self.numberOfHitsReport_process(
+                                        hits        = hits,
+                                        hitsFile    = options.str_numberOfHitsFile
+                                        )
+
+        if len(options.str_resultFile):
+            self.dataReport_process     (    
+                                        results     = d_ret,
+                                        resultFile  = options.str_resultFile
+                                        )
+
+        if len(options.str_summaryKeys):
+            self.summaryReport_process  ( 
+                                        data        = l_data,
+                                        summaryKeys = options.str_summaryKeys,
+                                        summaryFile = options.str_summaryFile
+                                        )
+       
+
     def run(self, options):
         """
         Define the code to be run by this plugin app.
@@ -422,64 +507,20 @@ class PacsQueryApp(ChrisApp):
         self.b_pfurlQuiet       = options.b_pfurlQuiet
         self.str_outputDir      = options.outputdir
 
-        if len(options.str_man):
-            d_ret = self.man_get()
-            if options.str_man in d_ret:
-                str_help    = d_ret[options.str_man]
-                print(str_help)
-            if options.str_man == 'entries':
-                print(d_ret.keys())
-
-        else:
+        if not self.manPage_checkAndShow(options):
             if len(options.str_pfdcm):
                 self.str_pfdcm      = options.str_pfdcm
-
-                if len(options.str_msg):
-                    self.str_msg        = options.str_msg
-                    try:
-                        self.d_msg      = json.loads(self.str_msg)
-                        self.b_canRun   = True
-                    except:
-                        self.b_canRun   = False
-                else:
-                    if len(options.str_patientID) and len(options.str_PACSservice):
-                        self.str_patientID      = options.str_patientID
-                        self.str_PACSservice    = options.str_PACSservice
-                        self.d_msg  = {
-                            'action':   'PACSinteract',
-                            'meta': {
-                                'do':   'query',
-                                'on': {
-                                    'PatientID': self.str_patientID
-                                },
-                                "PACS": self.str_PACSservice
-                            }
-                        }
-                        self.b_canRun   = True
+                if not self.directMessage_checkAndConstruct(options):
+                    self.queryMessage_checkAndConstruct(options)
 
                 if self.b_canRun:
                     d_ret   = self.service_call(msg = self.d_msg)
                     l_data  = d_ret['query']['data']
                     hits    = len(l_data) 
                     self.dp.qprint('Query returned %d study hits' % hits)
-                    if len(options.str_numberOfHitsFile):
-                        self.numberOfHitsReport_process(
-                                                    hits        = hits,
-                                                    hitsFile    = options.str_numberOfHitsFile
-                                                    )
 
-                    if len(options.str_resultFile):
-                        self.dataReport_process     (    
-                                                    results     = d_ret,
-                                                    resultFile  = options.str_resultFile
-                                                    )
+                    self.outputFiles_generate(options, hits, d_ret, l_data)
 
-                    if len(options.str_summaryKeys):
-                        self.summaryReport_process  ( 
-                                                    data        = l_data,
-                                                    summaryKeys = options.str_summaryKeys,
-                                                    summaryFile = options.str_summaryFile
-                                                    )
         return d_ret
 
 # ENTRYPOINT
