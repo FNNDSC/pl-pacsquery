@@ -7,6 +7,8 @@
 #                        dev@babyMRI.org
 #
 
+str_version = "1.0.0"
+
 str_name = """
     NAME
 
@@ -17,6 +19,7 @@ str_synposis = """
     SYNOPSIS
 
         pacsquery.py    --pfdcm <PACserviceIP:port>             \\
+                        [--version]                             \\
                         [--msg <jsonMsgString>]                 \\
                         [--patientID <patientID>]               \\
                         [--PACSservice <PACSservice>]           \\
