@@ -32,6 +32,7 @@ ENV UID=$UID
 ENV APPROOT="/usr/src/pacsquery"  VERSION="1.0.0"
 COPY ["pacsquery", "${APPROOT}"]
 COPY ["requirements.txt", "${APPROOT}"]
+WORKDIR $APPROOT
 
 RUN apt-get update \
   && apt-get install sudo                                             \
@@ -39,9 +40,9 @@ RUN apt-get update \
   && addgroup localuser sudo                                          \
   && echo "localuser:localuser" | chpasswd                            \
   && adduser localuser sudo                                           \
-  && apt-get install libcurl4-openssl-dev                             \
+  && apt-get install -y libssl-dev libcurl4-openssl-dev bsdmainutils vim net-tools inetutils-ping \
+  && apt-get install -y libssl-dev libcurl4-openssl-dev bsdmainutils \
   && pip install -r requirements.txt
 
-WORKDIR $APPROOT
 
 CMD ["pacsquery.py", "--json"]
