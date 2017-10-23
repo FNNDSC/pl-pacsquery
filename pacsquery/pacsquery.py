@@ -123,6 +123,7 @@ str_args = """
 """
 
 import os
+import sys
 import json
 import pprint
 import pypx
@@ -274,7 +275,15 @@ class PacsQueryApp(ChrisApp):
             default     = False,
             action      = 'store_true',
             optional    = True,
-            help        = 'Silence pfurl noise.')
+            help        = 'Silence pfurl noise.'),
+        self.add_argument(
+            '--version',
+            dest        = 'b_version',
+            type        = bool,
+            default     = False,
+            action      = 'store_true',
+            optional    = True,
+            help        = 'Show .')
 
     def df_print(self, adict):
         """
@@ -510,7 +519,10 @@ class PacsQueryApp(ChrisApp):
         self.b_pfurlQuiet       = options.b_pfurlQuiet
         self.str_outputDir      = options.outputdir
 
-        if not self.manPage_checkAndShow(options):
+        if options.b_version:
+            print(str_version)
+
+        if not self.manPage_checkAndShow(options) and not options.b_version:
             if len(options.str_pfdcm):
                 self.str_pfdcm      = options.str_pfdcm
                 if not self.directMessage_checkAndConstruct(options):
