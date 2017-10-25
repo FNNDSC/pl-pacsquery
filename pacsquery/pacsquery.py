@@ -145,7 +145,7 @@ class PacsQueryApp(ChrisApp):
     TITLE = 'Pacs Query'
     CATEGORY = ''
     TYPE = 'fs'
-    DESCRIPTION = 'An app to find data of interest on the PACS'
+    DESCRIPTION = 'An app to query a PACS using an intermediary REST service.'
     DOCUMENTATION = 'http://wiki'
     LICENSE = 'Opensource (MIT)'
     VERSION = '0.99'
@@ -410,11 +410,17 @@ class PacsQueryApp(ChrisApp):
         
         str_report      = ''
         l_summaryKeys   = self.str_summaryKeys.split(',')
-        for entry in l_data:
-            str_report  = str_report + "\n"
+
+        if len(l_data):
+            # Header
             for key in l_summaryKeys:
-                str_report  = str_report + "%35s: %-45s\n" % \
-                            (key, entry[key]['value'])
+                str_report  = str_report + "%-60s\t" % key
+
+            # Body
+            for entry in l_data:
+                str_report  = str_report + "\n"
+                for key in l_summaryKeys:
+                    str_report  = str_report + "%-60s\t" % (entry[key]['value'])
 
         if len(self.str_summaryFile):
             str_FQsummaryFile   = os.path.join(self.str_outputDir, self.str_summaryFile) 
