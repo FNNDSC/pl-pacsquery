@@ -1,5 +1,5 @@
 ##################
-pl-pacsquery 1.0.2
+pl-pacsquery 1.0.3
 ##################
 
 .. image:: https://img.shields.io/github/tag/fnndsc/pl-pacsquery.svg?style=flat-square   :target: https://github.com/FNNDSC/pl-pacsquery
