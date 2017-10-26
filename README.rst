@@ -1,6 +1,6 @@
-###############
-pl-pacsquery
-###############
+##################
+pl-pacsquery 1.0.2
+##################
 
 .. image:: https://img.shields.io/github/tag/fnndsc/pl-pacsquery.svg?style=flat-square   :target: https://github.com/FNNDSC/pl-pacsquery
 .. image:: https://img.shields.io/docker/build/fnndsc/pl-pacsquery.svg?style=flat-square   :target: https://hub.docker.com/r/fnndsc/pl-pacsquery/

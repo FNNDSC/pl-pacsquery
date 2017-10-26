@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #                                                            _
 #
 # (c) 2016 Fetal-Neonatal Neuroimaging & Developmental Science Center
@@ -110,7 +111,7 @@ str_args = """
 
     --resultFile <resultFile>]
 
-        The name of the file in the <outputdir> to contain the results.
+        The name of the file in the <outputdir> to contain the results.Misc utilities for FNNDSC python repos
     
     --numberOfHitsFile <numberOfHitsFile>]
 
