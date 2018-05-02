@@ -12,7 +12,7 @@ def readme():
 
 setup(
       name             =   'pacsquery',
-      version          =   '1.0.6',
+      version          =   '1.1.0',
       description      =   'Query a PACS through an intermediary service, "pfdcm" (not included).',
       long_description =   readme(),
       author           =   'Rudolph Pienaar',

@@ -29,7 +29,7 @@ MAINTAINER fnndsc "dev@babymri.org"
 ARG UID=1001
 ENV UID=$UID
 
-ENV APPROOT="/usr/src/pacsquery"  VERSION="1.0.6"
+ENV APPROOT="/usr/src/pacsquery"  VERSION="1.1.0"
 COPY ["pacsquery", "${APPROOT}"]
 COPY ["requirements.txt", "${APPROOT}"]
 WORKDIR $APPROOT
