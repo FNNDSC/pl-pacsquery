@@ -45,4 +45,4 @@ RUN apt-get update \
   && pip install -r requirements.txt
 
 
-CMD ["pacsquery.py", "--json"]
+CMD ["pacsquery.py", "--help"]
